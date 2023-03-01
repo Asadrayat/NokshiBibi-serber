@@ -7,25 +7,25 @@ const port = process.env.PORT || 5000;
 // middle wares 
 app.use(cors())
 app.use(express.json());
+// function verifyJWT(req, res, next) {
 
-// Decode JWT
-function verifyJWT(req, res, next) {
-    const authHeader = req.headers.authorization
+//     const authHeader = req.headers.authorization;
+//     if (!authHeader) {
+//         return res.status(401).send('unauthorized access');
+//     }
 
-    if (!authHeader) {
-        return res.status(401).send({ message: 'unauthorized access' })
-    }
-    const token = authHeader.split(' ')[1]
+//     const token = authHeader.split(' ')[1];
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
-        if (err) {
-            return res.status(403).send({ message: 'Forbidden access' })
-        }
-        console.log(decoded)
-        req.decoded = decoded
-        next()
-    })
-}
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+//         if (err) {
+//             return res.status(403).send({ message: 'forbidden access' })
+//         }
+//         req.decoded = decoded;
+//         next();
+//     })
+
+// }
+
 // connection 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.nkyrz6w.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri,
@@ -48,26 +48,28 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
-        // Save user email 
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email
-            const user = req.body
 
-            const filter = { email: email }
-            const options = { upsert: true }
-            const updateDoc = {
-                $set: user,
-            }
-            const result = await usersCollection.updateOne(filter, updateDoc, options)
-
-            console.log(result)
-            res.send(result)
+        // app.get('/jwt', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { email: email };
+        //     const user = await usersCollection.findOne(query);
+        //     if (user) {
+        //         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' })
+        //         return res.send({ accessToken: token })
+        //     }
+        //     res.status(403).send({ accessToken: '' })
+        // })
+        // app.get('/users', async (req, res) => {
+        //     const query = {};
+        //     const users = await usersCollection.find(query).toArray();
+        //     res.send(users);
+        // });
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            // console.log(result);
+            res.send(result);
         })
-        app.get('/users', async (req, res) => {
-            const query = {};
-            const users = await usersCollection.find(query).toArray();
-            res.send(users);
-        });
         /*   app.get('/serviceshome', async (req, res) => {
               const query = {}
               const cursor = designCollection.find(query);
